@@ -2,35 +2,58 @@ import sys
 import pygame
 
 from components.entities import PhysicsEntity
+from components.tilemap import Tilemap
+from components.clouds import Clouds
 
-from config import config 
-from config import utils 
-
+from config.utils import load_image, load_images 
+from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH 
 
 class Game:
   def __init__(self) -> None:
     pygame.init()
 
     pygame.display.set_caption("Smash Ninja")
-    self.screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+    self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    self.display = pygame.Surface((SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)) # SCALING UP
 
     self.clock = pygame.time.Clock()
     
     self.movement = [False, False]
     
     self.assets = {
-      'player': utils.load_image('entities/player.png')
+      'decor': load_images('tiles/decor'),
+      'grass': load_images('tiles/grass'),
+      'large_decor': load_images('tiles/large_decor'),
+      'stone': load_images('tiles/stone'),
+      'player': load_image('entities/player.png'),
+      'background': load_image('background.png'),
+      'clouds': load_images('clouds')
     }
     
+    self.clouds = Clouds(self.assets['clouds'], count=16)
+    
     self.player = PhysicsEntity(self, 'player', (50, 50), (8, 15))
+    self.tilemap = Tilemap(self, tile_size=16)
+
+    #CAMERA
+    self.scroll = [0, 0]
 
   def run(self) -> None:
     while True:
-      self.screen.fill((14, 219, 248)) #moves object without copying prev frame
+      self.display.blit(self.assets['background'], (0, 0))
 
-      self.player.update((self.movement[1] - self.movement[0], 0))
-      self.player.render(self.screen)
+      self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
+      self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
+      render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
+      self.clouds.update()
+      self.clouds.render(self.display, offset=render_scroll)
+      
+      self.tilemap.render(self.display, offset=render_scroll)
+
+      self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
+      self.player.render(self.display, offset=render_scroll)
+      
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
           pygame.quit()
@@ -40,12 +63,17 @@ class Game:
             self.movement[0] = True
           if event.key == pygame.K_RIGHT:
             self.movement[1] = True
+          if event.key == pygame.K_UP:
+            self.player.velocity[1] = -3
+          if event.key == pygame.K_DOWN:
+            self.player.velocity[1] = 3
         if event.type == pygame.KEYUP:
           if event.key == pygame.K_LEFT:
             self.movement[0] = False
           if event.key == pygame.K_RIGHT:
             self.movement[1] = False
       
+      self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0)) # BLIT FOR SCALING UP
       pygame.display.update()
       self.clock.tick(60)
       
