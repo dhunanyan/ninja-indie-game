@@ -6,7 +6,7 @@ from components.tilemap import Tilemap
 from components.clouds import Clouds
 
 from config.utils import load_image, load_images 
-from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH 
+from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS
 
 class Game:
   def __init__(self) -> None:
@@ -75,6 +75,6 @@ class Game:
       
       self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0)) # BLIT FOR SCALING UP
       pygame.display.update()
-      self.clock.tick(60)
+      self.clock.tick(FPS)
       
 Game().run()
