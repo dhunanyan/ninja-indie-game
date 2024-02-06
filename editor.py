@@ -27,6 +27,11 @@ class Editor:
     
     self.tilemap = Tilemap(self, tile_size=16)
 
+    try:
+      self.tilemap.load('map.json')
+    except FileNotFoundError:
+      pass
+    
     #CAMERA
     self.scroll = [0, 0]
     
@@ -136,7 +141,9 @@ class Editor:
             self.movement[3] = True
           if event.key == pygame.K_g:
             self.ongrid = not self.ongrid
-          if event.key == pygame.K_LSHIFT:
+          if event.key == pygame.K_o:
+            self.tilemap.save('map.json')
+          if event.key == pygame.K_LCTRL:
             self.shift = True
             
         if event.type == pygame.KEYUP:
@@ -148,7 +155,7 @@ class Editor:
             self.movement[2] = False
           if event.key == pygame.K_s:
             self.movement[3] = False
-          if event.key == pygame.K_LSHIFT:
+          if event.key == pygame.K_LCTRL:
             self.shift = False
       
       self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0)) # BLIT FOR SCALING UP
