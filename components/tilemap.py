@@ -1,6 +1,6 @@
 import json
 import pygame
-from config.constants import NEIGHBOR_OFFSET, PHYSICS_TILE_TYPES
+from config.constants import NEIGHBOR_OFFSET, PHYSICS_TILE_TYPES, AUTOTILE_NEIGHBORS, AUTOTILE_TYPES, AUTOTILE_MAP
 
 class Tilemap:
   def __init__(self, game, tile_size=16):
@@ -48,6 +48,21 @@ class Tilemap:
           self.tile_size))
     return rects
     
+  def autotile(self):
+    for loc in self.tilemap:
+      tile = self.tilemap[loc]
+      neighbors = set()
+      
+      for shift in AUTOTILE_NEIGHBORS:
+        check_loc = str(tile['pos'][0] + shift[0]) + ";" + str(tile['pos'][1] + shift[1])
+        if check_loc in self.tilemap:
+          if self.tilemap[check_loc]['type'] == tile['type']:
+            neighbors.add(shift)
+            
+      neighbors = tuple(sorted(neighbors))
+      if (tile['type'] in AUTOTILE_TYPES) and (neighbors in AUTOTILE_MAP):
+        tile['variant'] = AUTOTILE_MAP[neighbors]
+  
   def render(self, surf, offset=(0, 0)):
     for tile in self.offgrid_tiles:
       surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1]))

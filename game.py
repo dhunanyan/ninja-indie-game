@@ -40,6 +40,11 @@ class Game:
     self.player = Player(self, (50, 50), (8, 15))
     self.tilemap = Tilemap(self, tile_size=16)
 
+    try:
+      self.tilemap.load('./assets//maps/map0.json')
+    except FileNotFoundError:
+      pass
+    
     #CAMERA
     self.scroll = [0, 0]
 
@@ -64,18 +69,18 @@ class Game:
           pygame.quit()
           sys.exit()
         if event.type == pygame.KEYDOWN:
-          if event.key == pygame.K_LEFT:
+          if event.key == pygame.K_a:
             self.movement[0] = True
-          if event.key == pygame.K_RIGHT:
+          if event.key == pygame.K_d:
             self.movement[1] = True
-          if event.key == pygame.K_UP:
+          if event.key == pygame.K_w:
             self.player.velocity[1] = -3
-          if event.key == pygame.K_DOWN:
+          if event.key == pygame.K_s:
             self.player.velocity[1] = 3
         if event.type == pygame.KEYUP:
-          if event.key == pygame.K_LEFT:
+          if event.key == pygame.K_a:
             self.movement[0] = False
-          if event.key == pygame.K_RIGHT:
+          if event.key == pygame.K_d:
             self.movement[1] = False
       
       self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0)) # BLIT FOR SCALING UP
