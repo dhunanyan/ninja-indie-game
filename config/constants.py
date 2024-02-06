@@ -28,3 +28,7 @@ AUTOTILE_MAP = {
   tuple(sorted([(1, 0), (0, -1), (0, 1)])): 7,
   tuple(sorted([(1, 0), (-1, 0), (0, 1), (0, -1)])): 8,
 }
+
+#ANIMATION
+LEAF_ANIMATION_INTENSITY = 49999
+LEFT_VELOCITY = [-0.1, 0.3]
