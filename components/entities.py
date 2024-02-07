@@ -88,6 +88,7 @@ class Player(PhysicsEntity):
     self.air_time = 0
     self.jumps = PLAYER_JUMPS
     self.wall_slide = False
+    self.dashing = 0
     
     super().__init__(game, 'player', pos, size)
   
@@ -123,6 +124,16 @@ class Player(PhysicsEntity):
     else:
       self.velocity[0] = min(self.velocity[0] + 0.1, 0)
   
+    if self.dashing > 0:
+      self.dashing = max(0, self.dashing - 1)
+    if self.dashing < 0:
+      self.dashing = min(0, self.dashing + 1)
+     # This is also cool down - you can't dash as much as you want! :D
+    if abs(self.dashing) > 50:
+      self.velocity[0] = abs(self.dashing) / self.dashing * 8
+      if abs(self.dashing) == 51:
+        self.velocity[0] *= 0.1
+    
   def jump(self):
     if self.wall_slide:
       if self.flip and self.last_movement[0] < 0:
@@ -142,3 +153,10 @@ class Player(PhysicsEntity):
       self.jumps -= 1
       self.air_time = 5
       return True
+    
+  def dash(self):
+    if not self.dashing:
+      if self.flip:
+        self.dashing = -60
+      else:
+        self.dashing = 60
