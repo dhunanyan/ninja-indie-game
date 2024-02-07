@@ -1,4 +1,8 @@
+import math
+import random
 import pygame
+
+from components.particle import Particle
 from config.constants import Y_MAX_VELOCITY, PLAYER_JUMPS, PLAYER_WALL_JUMP_X, PLAYER_WALL_JUMP_Y
 
 class PhysicsEntity:
@@ -14,6 +18,7 @@ class PhysicsEntity:
       'right': False, 
       'left': False
       }
+    self.y_max_velocity = Y_MAX_VELOCITY
     
     #ANIMATION
     self.action = ''
@@ -73,7 +78,7 @@ class PhysicsEntity:
     
     self.last_movement = movement
     
-    self.velocity[1] = min(Y_MAX_VELOCITY, self.velocity[1] + 0.1)
+    self.velocity[1] = min(self.y_max_velocity, self.velocity[1] + 0.1)
     
     if self.collisions['down'] or self.collisions['up']:
       self.velocity[1] = 0
@@ -81,7 +86,13 @@ class PhysicsEntity:
     self.animation.update()
     
   def render(self, surf, offset):
-    surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1]))
+    img = self.animation.img()
+    pos_x = self.pos[0] - offset[0] + self.anim_offset[0]
+    pos_y = self.pos[1] - offset[1] + self.anim_offset[1]
+    entity = pygame.transform.flip(img, self.flip, False)
+    
+    surf.blit(entity, (pos_x, pos_y))
+    
     
 class Player(PhysicsEntity):
   def __init__(self, game, pos, size):
@@ -118,11 +129,6 @@ class Player(PhysicsEntity):
         self.set_action('run')
       else:
         self.set_action('idle')
-        
-    if self.velocity[0] > 0:
-      self.velocity[0] = max(self.velocity[0] - 0.1, 0)
-    else:
-      self.velocity[0] = min(self.velocity[0] + 0.1, 0)
   
     if self.dashing > 0:
       self.dashing = max(0, self.dashing - 1)
@@ -133,23 +139,61 @@ class Player(PhysicsEntity):
       self.velocity[0] = abs(self.dashing) / self.dashing * 8
       if abs(self.dashing) == 51:
         self.velocity[0] *= 0.1
+      # STREAM ANIMATION
+      angle = random.random() * math.pi * 2
+      speed = random.random() * 0.5 + 0.5 # Random from 0 to 1
+      p_velocity = [abs(self.dashing) / self.dashing * random.random() * 3, 0] # random from 0 to 3
+      p_dash = Particle(
+        self.game, 
+        'particle', 
+        self.rect().center, 
+        velocity=p_velocity,
+        frame=random.randint(0, 7)
+      )
+      self.game.particles.append(p_dash)
+    if abs(self.dashing) in {60, 50}:
+      for i in range(20):
+        # DASHING ANIMATION
+        angle = random.random() * math.pi * 2
+        speed = random.random() * 0.5 + 0.5 # Random from 0 to 1
+        p_velocity = [math.cos(angle) * speed, math.sin(angle) * speed]
+        p_dash = Particle(
+          self.game, 
+          'particle', 
+          self.rect().center, 
+          velocity=p_velocity,
+          frame=random.randint(0, 7)
+        )
+        self.game.particles.append(p_dash)
+      
+    if self.velocity[0] > 0:
+      self.velocity[0] = max(self.velocity[0] - 0.1, 0)
+    else:
+      self.velocity[0] = min(self.velocity[0] + 0.1, 0)
     
+  # Overriding parent render so the player disappears when dashing
+  def render(self, surf, offset=(0,0)):
+    if abs(self.dashing) <= 50:
+      super().render(surf, offset=offset)
+        
   def jump(self):
     if self.wall_slide:
+      self.jumps = 1
+      self.air_time = 5
+      self.velocity[1] = PLAYER_WALL_JUMP_Y
       if self.flip and self.last_movement[0] < 0:
         self.velocity[0] = PLAYER_WALL_JUMP_X
-        self.velocity[1] = PLAYER_WALL_JUMP_Y
-        self.air_time = 5
-        self.jumps = max(0, self.jumps - 1) # to not get negative value
         return True
       elif not self.flip and self.last_movement[0] > 0:
         self.velocity[0] = -PLAYER_WALL_JUMP_X
-        self.velocity[1] = PLAYER_WALL_JUMP_Y
-        self.air_time = 5
-        self.jumps = max(0, self.jumps - 1) # to not get negative value
         return True
-    elif self.jumps:
-      self.velocity[1] -= 3
+    elif self.jumps == 2:
+      self.velocity[1] =- 3
+      self.jumps -= 1
+      self.air_time = 5
+      return True
+    elif self.jumps == 1:
+      self.velocity[1] =- 2
       self.jumps -= 1
       self.air_time = 5
       return True
