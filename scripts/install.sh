@@ -1,5 +1,3 @@
-rm -rf venv
-
 pip install virtualenv
 python -m venv venv
 
