@@ -3,7 +3,7 @@ import sys
 import math
 import pygame
 
-from components.entities import Player
+from components.player import Player
 from components.tilemap import Tilemap
 from components.clouds import Clouds
 from components.particle import Particle
@@ -28,8 +28,11 @@ class Game:
       'grass': load_images('tiles/grass'),
       'large_decor': load_images('tiles/large_decor'),
       'stone': load_images('tiles/stone'),
+      'spawners': load_images('tiles/spawners'),
+
       'background': load_image('background.png'),
       'clouds': load_images('clouds'),
+      
       'player': load_image('entities/player.png'),
       'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
       'player/run': Animation(load_images('entities/player/run'), img_dur=4),
@@ -37,6 +40,7 @@ class Game:
       'player/slide': Animation(load_images('entities/player/slide')),
       'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
       'particles/leaf': Animation(load_images('particles/leaf'), img_dur=20, loop=False),
+            
       'particles/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
       'particles/light-sparkle': Animation(load_images('particles/light-sparkle'), img_dur=2, loop=False),
       'particles/dark-sparkle': Animation(load_images('particles/dark-sparkle'), img_dur=1, loop=False),
@@ -48,7 +52,7 @@ class Game:
     self.tilemap = Tilemap(self, tile_size=16)
 
     try:
-      self.tilemap.load('./assets//maps/map0.json')
+      self.tilemap.load('./assets/maps/map0.json')
     except FileNotFoundError:
       pass
     
@@ -61,6 +65,12 @@ class Game:
         23,
         13
       ))
+    
+    for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
+      if spawner['variant'] == 0:
+        self.player.pos = spawner['pos']
+      else:
+        print('enemy')
     
     self.particles = []
     

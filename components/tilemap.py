@@ -1,5 +1,6 @@
 import json
 import pygame
+
 from config.constants import NEIGHBOR_OFFSET, PHYSICS_TILE_TYPES, AUTOTILE_NEIGHBORS, AUTOTILE_TYPES, AUTOTILE_MAP
 
 class Tilemap:
@@ -9,6 +10,7 @@ class Tilemap:
     self.tilemap = {}
     self.offgrid_tiles = []
     
+  #  Keep actually keeps the spawner in tilemap - without keep we just get the pos
   def extract(self, id_pairs, keep=False):
     matches = []
     for tile in self.offgrid_tiles.copy():
