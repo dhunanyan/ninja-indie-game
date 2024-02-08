@@ -134,37 +134,15 @@ class Player(PhysicsEntity):
       self.dashing = max(0, self.dashing - 1)
     if self.dashing < 0:
       self.dashing = min(0, self.dashing + 1)
+    
      # This is also cool down - you can't dash as much as you want! :D
     if abs(self.dashing) > 50:
       self.velocity[0] = abs(self.dashing) / self.dashing * 8
       if abs(self.dashing) == 51:
         self.velocity[0] *= 0.1
-      # STREAM ANIMATION
-      angle = random.random() * math.pi * 2
-      speed = random.random() * 0.5 + 0.5 # Random from 0 to 1
-      p_velocity = [abs(self.dashing) / self.dashing * random.random() * 3, 0] # random from 0 to 3
-      p_dash = Particle(
-        self.game, 
-        'particle', 
-        self.rect().center, 
-        velocity=p_velocity,
-        frame=random.randint(0, 7)
-      )
-      self.game.particles.append(p_dash)
+      self.particles_animation('stream')
     if abs(self.dashing) in {60, 50}:
-      for i in range(20):
-        # DASHING ANIMATION
-        angle = random.random() * math.pi * 2
-        speed = random.random() * 0.5 + 0.5 # Random from 0 to 1
-        p_velocity = [math.cos(angle) * speed, math.sin(angle) * speed]
-        p_dash = Particle(
-          self.game, 
-          'particle', 
-          self.rect().center, 
-          velocity=p_velocity,
-          frame=random.randint(0, 7)
-        )
-        self.game.particles.append(p_dash)
+      self.particles_animation('dash')
       
     if self.velocity[0] > 0:
       self.velocity[0] = max(self.velocity[0] - 0.1, 0)
@@ -175,7 +153,55 @@ class Player(PhysicsEntity):
   def render(self, surf, offset=(0,0)):
     if abs(self.dashing) <= 50:
       super().render(surf, offset=offset)
-        
+  
+  def animate_stream(self):
+    p_velocity = [abs(self.dashing) / self.dashing * random.random() * 3, 0] # random from 0 to 3
+    p_dash = Particle(
+      self.game, 
+      'particle', 
+      self.rect().center, 
+      velocity=p_velocity,
+      frame=random.randint(0, 7)
+    )
+    self.game.particles.append(p_dash)
+  
+  def animate_dash(self):
+    for _ in range(20):
+      angle = random.random() * math.pi * 2
+      speed = random.random() * 0.5 + 0.5
+      p_velocity = [math.cos(angle) * speed, math.sin(angle) * speed]
+      p_double_jump = Particle(
+        self.game, 
+        'particle', 
+        self.rect().center, 
+        velocity=p_velocity,
+        frame=random.randint(0, 7)
+      )
+      self.game.particles.append(p_double_jump)
+  
+  def animate_double_jump(self):
+    for _ in range(10):
+      angle = random.random() * math.pi * 2
+      speed = random.random() * 0.5 + 0.5
+      p_velocity = [math.cos(angle) * speed, speed]
+      p_double_jump = Particle(
+        self.game, 
+        'light-sparkle', 
+        self.rect().center, 
+        velocity=p_velocity,
+        frame=random.randint(0, 7)
+      )
+      self.game.particles.append(p_double_jump)
+
+  def particles_animation(self, animation_type):
+    match animation_type:
+      case 'dash':
+        self.animate_dash()
+      case 'stream':
+        self.animate_stream()
+      case 'double_jump':
+        self.animate_double_jump()
+      
   def jump(self):
     if self.wall_slide:
       self.jumps = 1
@@ -193,9 +219,11 @@ class Player(PhysicsEntity):
       self.air_time = 5
       return True
     elif self.jumps == 1:
+      self.particles_animation('double_jump')
       self.velocity[1] =- 2
       self.jumps -= 1
       self.air_time = 5
+      
       return True
     
   def dash(self):

@@ -38,6 +38,8 @@ class Game:
       'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
       'particles/leaf': Animation(load_images('particles/leaf'), img_dur=20, loop=False),
       'particles/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
+      'particles/light-sparkle': Animation(load_images('particles/light-sparkle'), img_dur=2, loop=False),
+      'particles/dark-sparkle': Animation(load_images('particles/dark-sparkle'), img_dur=1, loop=False),
     }
     
     self.clouds = Clouds(self.assets['clouds'], count=16)
