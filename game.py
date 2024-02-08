@@ -3,13 +3,14 @@ import sys
 import math
 import pygame
 
+from components.enemy import Enemy
 from components.player import Player
 from components.tilemap import Tilemap
 from components.clouds import Clouds
 from components.particle import Particle
 
 from config.utils import load_image, load_images, Animation
-from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY
+from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM
 
 class Game:
   def __init__(self) -> None:
@@ -28,10 +29,12 @@ class Game:
       'grass': load_images('tiles/grass'),
       'large_decor': load_images('tiles/large_decor'),
       'stone': load_images('tiles/stone'),
-      'spawners': load_images('tiles/spawners'),
 
       'background': load_image('background.png'),
       'clouds': load_images('clouds'),
+      
+      'enemy/idle': Animation(load_images('entities/enemy/idle'), img_dur=6),
+      'enemy/run': Animation(load_images('entities/enemy/run'), img_dur=4),
       
       'player': load_image('entities/player.png'),
       'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
@@ -45,10 +48,10 @@ class Game:
       'particles/light-sparkle': Animation(load_images('particles/light-sparkle'), img_dur=2, loop=False),
       'particles/dark-sparkle': Animation(load_images('particles/dark-sparkle'), img_dur=1, loop=False),
     }
-    
+    player_pos = (50, 50)
     self.clouds = Clouds(self.assets['clouds'], count=16)
     
-    self.player = Player(self, (50, 50), (8, 15))
+    self.player = Player(self, player_pos, PLAYER_DIM)
     self.tilemap = Tilemap(self, tile_size=16)
 
     try:
@@ -58,7 +61,8 @@ class Game:
     
     self.leaf_spawners = []
     # get a list of locations for fancy animation
-    for tree in self.tilemap.extract([('large_decor', 2)], keep=True):
+    tress = self.tilemap.extract([('large_decor', 2)], keep=True)
+    for tree in tress:
       self.leaf_spawners.append(pygame.Rect(
         4 + tree['pos'][0],
         4 + tree['pos'][1],
@@ -66,11 +70,17 @@ class Game:
         13
       ))
     
-    for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
+    self.enemies = []
+    # get a list of locations for enemies
+    spawners = self.tilemap.extract([
+      ('spawners', 0), 
+      ('spawners', 1)
+    ])
+    for spawner in spawners:
       if spawner['variant'] == 0:
         self.player.pos = spawner['pos']
       else:
-        print('enemy')
+        self.enemies.append(Enemy(self, spawner['pos'], ENEMY_DIM))
     
     self.particles = []
     
@@ -97,6 +107,11 @@ class Game:
       
       self.tilemap.render(self.display, offset=render_scroll)
 
+      
+      for enemy in self.enemies.copy():
+        enemy.update(self.tilemap, (0, 0))
+        enemy.render(self.display, offset=render_scroll)
+      
       self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
       self.player.render(self.display, offset=render_scroll)
       
