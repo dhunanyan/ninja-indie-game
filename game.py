@@ -1,4 +1,5 @@
 import random
+import os
 import sys
 import math
 import pygame
@@ -11,7 +12,7 @@ from components.clouds import Clouds
 from components.particle import Particle
 
 from config.utils import load_image, load_images, Animation
-from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM
+from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM, TRANSITION_COLOR, TRANSITION_SPEED
 
 class Game:
   def __init__(self) -> None:
@@ -57,7 +58,8 @@ class Game:
     self.player = Player(self, player_pos, PLAYER_DIM)
     self.tilemap = Tilemap(self, tile_size=16)
 
-    self.load_level(0)
+    self.level = 2
+    self.load_level(self.level)
     
     self.screen_shake = 0
 
@@ -92,9 +94,9 @@ class Game:
     self.particles = []
     self.sparks = []
     
-    #CAMERA
     self.scroll = [0, 0]
     self.dead = 0
+    self.transition = -30
   
   def run(self) -> None:
     while True:
@@ -102,10 +104,21 @@ class Game:
       
       self.screen_shake = max(0, self.screen_shake - 1)
       
+      # Game end condition
+      if not len(self.enemies):
+        self.transition += 1
+        if self.transition > 30:
+          self.level += (self.level + 1, len(os.listdir('assets/maps')) - 1)
+          self.load_level(self.level)
+      if self.transition < 0:
+        self.transition += 1
+      
       if self.dead:
         self.dead += 1
+        if self.dead >= 10:
+          self.transition = min(30, self.transition + 1)
         if self.dead > 40:
-          self.load_level(0)
+          self.load_level(self.level)
 
       self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / RENDER_SCALE - self.scroll[0]) / 30
       self.scroll[1] += (self.player.rect().centery - self.display.get_height() / RENDER_SCALE - self.scroll[1]) / 30
@@ -216,6 +229,17 @@ class Game:
             self.movement[0] = False
           if event.key == pygame.K_d:
             self.movement[1] = False
+      
+      if self.transition:
+        transition_surf = pygame.Surface(self.display.get_size())
+        pygame.draw.circle(
+          transition_surf, 
+          TRANSITION_COLOR, 
+          (self.display.get_width() // 2, self.display.get_height() // 2),
+          (TRANSITION_SPEED - abs(self.transition)) * (SCREEN_HEIGHT / TRANSITION_SPEED / 2)
+        )
+        transition_surf.set_colorkey(TRANSITION_COLOR)
+        self.display.blit(transition_surf, (0, 0))
       
       screen_shake_offset = (
         random.random() * self.screen_shake - self.screen_shake / 2,
