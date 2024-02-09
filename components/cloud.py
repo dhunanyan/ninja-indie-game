@@ -13,4 +13,3 @@ class Cloud:
     surf.blit(self.img, (
       render_pos[0] % (surf.get_width() + self.img.get_width()) - self.img.get_width(),
       render_pos[1] % (surf.get_height() + self.img.get_height()) - self.img.get_height()))
-    

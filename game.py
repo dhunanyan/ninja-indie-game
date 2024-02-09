@@ -12,7 +12,7 @@ from components.clouds import Clouds
 from components.particle import Particle
 
 from config.utils import load_image, load_images, Animation
-from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM, TRANSITION_COLOR, TRANSITION_SPEED
+from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM, TRANSITION_COLOR, TRANSITION_SPEED, BACKGROUND_SHADOWS_LIST
 
 class Game:
   def __init__(self) -> None:
@@ -20,7 +20,11 @@ class Game:
 
     pygame.display.set_caption("Smash Ninja")
     self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    self.display = pygame.Surface((SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)) # SCALING UP
+    self.display = pygame.Surface(
+      (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2),
+      pygame.SRCALPHA
+    ) # SCALING UP
+    self.display_2 = pygame.Surface((SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
 
     self.clock = pygame.time.Clock()
     
@@ -58,7 +62,7 @@ class Game:
     self.player = Player(self, player_pos, PLAYER_DIM)
     self.tilemap = Tilemap(self, tile_size=16)
 
-    self.level = 2
+    self.level = 0
     self.load_level(self.level)
     
     self.screen_shake = 0
@@ -100,7 +104,8 @@ class Game:
   
   def run(self) -> None:
     while True:
-      self.display.blit(self.assets['background'], (0, 0))
+      self.display.fill((0, 0, 0, 0))
+      self.display_2.blit(self.assets['background'], (0, 0))
       
       self.screen_shake = max(0, self.screen_shake - 1)
       
@@ -108,7 +113,7 @@ class Game:
       if not len(self.enemies):
         self.transition += 1
         if self.transition > 30:
-          self.level += (self.level + 1, len(os.listdir('assets/maps')) - 1)
+          self.level += min(self.level + 1, len(os.listdir('assets/maps')) - 1)
           self.load_level(self.level)
       if self.transition < 0:
         self.transition += 1
@@ -130,12 +135,11 @@ class Game:
                  rect.y + random.random() * rect.height)
           self.particles.append(Particle(self, 'leaf', pos, velocity=LEFT_VELOCITY, frame=random.randint(0, 20)))
           
-
       self.clouds.update()
-      self.clouds.render(self.display, offset=render_scroll)
+      # self.display_2 instead of self.display to not render outlines of clouds
+      self.clouds.render(self.display_2, offset=render_scroll)
       
       self.tilemap.render(self.display, offset=render_scroll)
-
       
       for enemy in self.enemies.copy():
         kill =enemy.update(self.tilemap, (0, 0))
@@ -200,6 +204,14 @@ class Game:
         if self.kill:
           self.sparks.remove(spark)
       
+      display_mask = pygame.mask.from_surface(self.display)
+      display_sillhouette = display_mask.to_surface(
+        setcolor=(0, 0, 0, 180), 
+        unsetcolor=(0, 0, 0, 0)
+      )
+      for offset in BACKGROUND_SHADOWS_LIST:
+        self.display_2.blit(display_sillhouette, offset)
+      
       for particle in self.particles.copy():
         kill = particle.update()
         particle.render(self.display, offset=render_scroll)
@@ -241,11 +253,14 @@ class Game:
         transition_surf.set_colorkey(TRANSITION_COLOR)
         self.display.blit(transition_surf, (0, 0))
       
+      
+      self.display_2.blit(self.display, (0, 0))
+      
       screen_shake_offset = (
         random.random() * self.screen_shake - self.screen_shake / 2,
         random.random() * self.screen_shake - self.screen_shake / 2,
       )
-      self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), screen_shake_offset) # BLIT FOR SCALING UP
+      self.screen.blit(pygame.transform.scale(self.display_2, self.screen.get_size()), screen_shake_offset) # BLIT FOR SCALING UP
       pygame.display.update()
       self.clock.tick(FPS)
       
