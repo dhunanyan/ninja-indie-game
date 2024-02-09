@@ -143,6 +143,7 @@ class Player(Physics):
     
   def dash(self):
     if not self.dashing:
+      self.game.sfx['dash'].play()
       if self.flip:
         self.dashing = -60
       else:

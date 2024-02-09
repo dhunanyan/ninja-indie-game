@@ -45,3 +45,18 @@ PLAYER_MAX_AIR_TIME = 120
 
 # ENEMY
 ENEMY_DIM = (8, 15)
+
+# SOUNDS
+SFX_VOLUMES = {
+  'jump': 0.2,
+  'dash': 0.4,
+  'hit': 0.8,
+  'shoot': 0.3,
+  'ambience': 0.7
+}
+
+MUSIC_VOLUMES = {
+  0: 0.5,
+  1: 0.5,
+  2: 0.5,
+}

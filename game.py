@@ -12,7 +12,7 @@ from components.clouds import Clouds
 from components.particle import Particle
 
 from config.utils import load_image, load_images, Animation
-from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM, TRANSITION_COLOR, TRANSITION_SPEED, BACKGROUND_SHADOWS_LIST
+from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM, TRANSITION_COLOR, TRANSITION_SPEED, BACKGROUND_SHADOWS_LIST, SFX_VOLUMES, MUSIC_VOLUMES
 
 class Game:
   def __init__(self) -> None:
@@ -63,9 +63,23 @@ class Game:
     self.tilemap = Tilemap(self, tile_size=16)
 
     self.level = 0
+    self.music = 0
+    self.change_music = True
     self.load_level(self.level)
     
     self.screen_shake = 0
+    
+    self.sfx = {
+      'jump': pygame.mixer.Sound('assets/sfx/jump.wav'),
+      'dash': pygame.mixer.Sound('assets/sfx/dash.wav'),
+      'hit': pygame.mixer.Sound('assets/sfx/hit.wav'),
+      'shoot': pygame.mixer.Sound('assets/sfx/shoot.wav'),
+      'ambience': pygame.mixer.Sound('assets/sfx/ambience.wav'),
+    }
+    
+    # Audio volumes
+    for sfx in list(self.sfx):
+      self.sfx[sfx].set_volume(SFX_VOLUMES[sfx])
 
   def load_level(self, map_id):
     self.tilemap.load(f"assets/maps/{map_id}.json")
@@ -103,7 +117,15 @@ class Game:
     self.transition = -30
   
   def run(self) -> None:
+    self.sfx['ambience'].play(-1)
+    
     while True:
+      if self.change_music:
+        pygame.mixer.music.load(f"assets/soundtracks/{min(self.level, len(os.listdir('assets/soundtracks')) - 1)}.wav")
+        pygame.mixer.music.set_volume(MUSIC_VOLUMES[self.level])
+        pygame.mixer.music.play(-1)
+        self.change_music = False
+        
       self.display.fill((0, 0, 0, 0))
       self.display_2.blit(self.assets['background'], (0, 0))
       
@@ -114,6 +136,7 @@ class Game:
         self.transition += 1
         if self.transition > 30:
           self.level += min(self.level + 1, len(os.listdir('assets/maps')) - 1)
+          self.change_music = True
           self.load_level(self.level)
       if self.transition < 0:
         self.transition += 1
@@ -175,6 +198,7 @@ class Game:
           if self.player.rect().collidepoint(projectile[0]):
             self.projectiles.remove(projectile)
             self.dead += 1
+            self.sfx['shoot'].play()
             self.screen_shake = max(16, self.screen_shake)
             #EXPLOSION
             for _ in range(30):
@@ -231,7 +255,8 @@ class Game:
           if event.key == pygame.K_d:
             self.movement[1] = True
           if event.key == pygame.K_w:
-            self.player.jump()
+            if self.player.jump():
+              self.sfx['jump'].play()
           if event.key == pygame.K_s:
             self.player.velocity[1] = 3
           if event.key == pygame.K_SPACE:

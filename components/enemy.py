@@ -36,6 +36,7 @@ class Enemy(Physics):
         if (abs(dis[1]) < 16):
           if self.flip and dis[0] < 0:
             # spawns to the left
+            self.game.sfx['shoot'].play()
             proj_speed = -1.5
             timer = 0
             self.game.projectiles.append([[
@@ -81,6 +82,7 @@ class Enemy(Physics):
     if abs(self.game.player.dashing) >= 50:
       if self.rect().colliderect(self.game.player.rect()):
         #EXPLOSION
+        self.game.sfx['hit'].play()
         for i in range(30):
           rw = (196, 44, 54) if random.randint(0, 1) else (160, 160, 160)
           rgb = [
