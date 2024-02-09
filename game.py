@@ -3,6 +3,7 @@ import sys
 import math
 import pygame
 
+from components.spark import Spark
 from components.enemy import Enemy
 from components.player import Player
 from components.tilemap import Tilemap
@@ -56,10 +57,12 @@ class Game:
     self.player = Player(self, player_pos, PLAYER_DIM)
     self.tilemap = Tilemap(self, tile_size=16)
 
-    try:
-      self.tilemap.load('./assets/maps/map0.json')
-    except FileNotFoundError:
-      pass
+    self.load_level(0)
+    
+    self.screen_shake = 0
+
+  def load_level(self, map_id):
+    self.tilemap.load(f"assets/maps/{map_id}.json")
     
     self.leaf_spawners = []
     # get a list of locations for fancy animation
@@ -81,18 +84,28 @@ class Game:
     for spawner in spawners:
       if spawner['variant'] == 0:
         self.player.pos = spawner['pos']
+        self.player.air_time = 0
       else:
         self.enemies.append(Enemy(self, spawner['pos'], ENEMY_DIM))
     
     self.projectiles = []
     self.particles = []
+    self.sparks = []
     
     #CAMERA
     self.scroll = [0, 0]
-
+    self.dead = 0
+  
   def run(self) -> None:
     while True:
       self.display.blit(self.assets['background'], (0, 0))
+      
+      self.screen_shake = max(0, self.screen_shake - 1)
+      
+      if self.dead:
+        self.dead += 1
+        if self.dead > 40:
+          self.load_level(0)
 
       self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / RENDER_SCALE - self.scroll[0]) / 30
       self.scroll[1] += (self.player.rect().centery - self.display.get_height() / RENDER_SCALE - self.scroll[1]) / 30
@@ -112,11 +125,14 @@ class Game:
 
       
       for enemy in self.enemies.copy():
-        enemy.update(self.tilemap, (0, 0))
+        kill =enemy.update(self.tilemap, (0, 0))
         enemy.render(self.display, offset=render_scroll)
+        if kill:
+          self.enemies.remove(enemy)
       
-      self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
-      self.player.render(self.display, offset=render_scroll)
+      if not self.dead:
+        self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
+        self.player.render(self.display, offset=render_scroll)
       
       # [[x, y], direction, timer]
       for projectile in self.projectiles.copy():
@@ -129,11 +145,47 @@ class Game:
         ))
         if self.tilemap.solid_check(projectile[0]):
           self.projectiles.remove(projectile)
+          for _ in range(4):
+            spark = Spark(
+              projectile[0],
+              random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), # bounce back to the direction it came from
+              2 + random.random()
+            )
+            self.sparks.append(spark)
         elif projectile[2] > 360:
           self.projectiles.remove(projectile)
         elif abs(self.player.dashing) < 50:
           if self.player.rect().collidepoint(projectile[0]):
             self.projectiles.remove(projectile)
+            self.dead += 1
+            self.screen_shake = max(16, self.screen_shake)
+            #EXPLOSION
+            for _ in range(30):
+              angle = random.random() * math.pi * 2
+              speed = random.random() * 5
+              spark = Spark(
+                self.player.rect().center,
+                angle,
+                2 + random.random()
+              )
+              self.sparks.append(spark)
+              particle = Particle(
+                self,
+                'particle',
+                self.player.rect().center,
+                velocity=[
+                  math.cos(angle + math.pi) * speed * 0.5,
+                  math.sin(angle + math.pi) * speed * 0.5,
+                ],
+                frame=random.randint(0, 7)
+              )
+              self.particles.append(particle)
+      
+      for spark in self.sparks.copy():
+        self.kill = spark.update()
+        spark.render(self.display, offset=render_scroll)
+        if self.kill:
+          self.sparks.remove(spark)
       
       for particle in self.particles.copy():
         kill = particle.update()
@@ -165,7 +217,11 @@ class Game:
           if event.key == pygame.K_d:
             self.movement[1] = False
       
-      self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0)) # BLIT FOR SCALING UP
+      screen_shake_offset = (
+        random.random() * self.screen_shake - self.screen_shake / 2,
+        random.random() * self.screen_shake - self.screen_shake / 2,
+      )
+      self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), screen_shake_offset) # BLIT FOR SCALING UP
       pygame.display.update()
       self.clock.tick(FPS)
       

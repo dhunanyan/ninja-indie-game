@@ -5,7 +5,7 @@ import random
 from components.physics import Physics
 from components.particle import Particle
 
-from config.constants import PLAYER_JUMPS, PLAYER_WALL_JUMP_X, PLAYER_WALL_JUMP_Y
+from config.constants import PLAYER_JUMPS, PLAYER_WALL_JUMP_X, PLAYER_WALL_JUMP_Y, PLAYER_MAX_AIR_TIME
 
 class Player(Physics):
   def __init__(self, game, pos, size):
@@ -20,6 +20,9 @@ class Player(Physics):
     super().update(tilemap, movement=movement)
     
     self.air_time += 1
+    
+    if self.air_time > PLAYER_MAX_AIR_TIME:
+      self.game.dead += 1
     
     if self.collisions['down']:
       self.air_time = 0

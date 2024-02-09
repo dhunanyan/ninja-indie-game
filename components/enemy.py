@@ -1,6 +1,10 @@
 import pygame
 import random
+import math
+
 from components.physics import Physics
+from components.particle import Particle
+from components.spark import Spark
 
 class Enemy(Physics):
   def __init__(self, game, pos, size):
@@ -37,7 +41,16 @@ class Enemy(Physics):
             self.game.projectiles.append([[
               self.rect().centerx - 7,
               self.rect().centery
-            ], proj_speed, timer]) 
+            ], proj_speed, timer])
+            
+            # Diamond animation
+            for _ in range(4):
+              spark = Spark(
+                self.game.projectiles[-1][0],
+                random.random() - 0.5 + math.pi,
+                2 + random.random()
+              )
+              self.game.sparks.append(spark)
           if not self.flip and dis[0] > 0:
             # spawns to the right
             proj_speed = 1.5
@@ -46,6 +59,15 @@ class Enemy(Physics):
               self.rect().centerx + 7,
               self.rect().centery
             ], proj_speed, timer]) 
+            
+            # Diamond animation
+            for _ in range(4):
+              spark = Spark(
+                self.game.projectiles[-1][0],
+                random.random() - 0.5,
+                2 + random.random()
+              )
+              self.game.sparks.append(spark)
     elif random.random() < 0.01:
       self.walking = random.randint(30, 120)
     
@@ -55,6 +77,52 @@ class Enemy(Physics):
       self.set_action('run')
     else:
       self.set_action('idle')
+      
+    if abs(self.game.player.dashing) >= 50:
+      if self.rect().colliderect(self.game.player.rect()):
+        #EXPLOSION
+        for i in range(30):
+          rw = (196, 44, 54) if random.randint(0, 1) else (160, 160, 160)
+          rgb = [
+            min(rw[0] + i * 2, 196),
+            min(rw[1] + i * 2, 44),
+            min(rw[2] + i * 2, 54)
+          ]
+          angle = random.random() * math.pi * 2
+          speed = random.random() * 5
+          spark = Spark(
+            self.rect().center,
+            angle,
+            2 + random.random(),
+            color=(rgb[0], rgb[1], rgb[2])
+          )
+          self.game.sparks.append(spark)
+          particle = Particle(
+            self.game,
+            'particle',
+            self.rect().center,
+            velocity=[
+              math.cos(angle + math.pi) * speed * 0.5,
+              math.sin(angle + math.pi) * speed * 0.5,
+            ],
+            frame=random.randint(0, 7)
+          )
+          self.game.particles.append(particle)
+          
+         
+        big_spark_right = Spark(
+          self.rect().center,
+          0,
+          5 + random.random()
+        )
+        big_spark_left = Spark(
+          self.rect().center,
+          math.pi,
+          5 + random.random()
+        ) 
+        self.game.sparks.append(big_spark_right)
+        self.game.sparks.append(big_spark_left)
+        return True
       
   def render(self, surf, offset=(0, 0)):
     super().render(surf, offset=offset)
