@@ -1,7 +1,11 @@
-pip install virtualenv
-python -m venv venv
+VENV_PATH="${VENV_PATH:-venv}"
 
-source venv/Scripts/activate
-./venv/Scripts/python.exe -m pip install -U --upgrade pip
+if [ ! -d "$VENV_PATH" ]; then
+  pip install virtualenv
+  python -m venv $VENV_PATH
+fi
 
-pip install -r requirements.txt
+source $VENV_PATH/Scripts/activate
+"./$VENV_PATH/Scripts/python.exe" -m pip install -U --upgrade pip
+
+python -m pip install -r requirements.txt -U

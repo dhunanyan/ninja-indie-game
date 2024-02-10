@@ -135,7 +135,9 @@ class Game:
       if not len(self.enemies):
         self.transition += 1
         if self.transition > 30:
+          print("PRZED:", self.level)
           self.level += min(self.level + 1, len(os.listdir('assets/maps')) - 1)
+          print("PO:", self.level)
           self.change_music = True
           self.load_level(self.level)
       if self.transition < 0:
