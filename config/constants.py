@@ -1,10 +1,28 @@
-# GLOBAL
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
+SCREEN_PROPORTION = SCREEN_WIDTH / SCREEN_HEIGHT
+SCREEN_SCALE = 2
+SCREEN_SIZE_OPTIONS = {
+  'small': {
+    'width': SCREEN_WIDTH,
+    'height': SCREEN_HEIGHT,
+    'scale': SCREEN_SCALE * 1.5
+  },
+  'medium': {
+    'width': SCREEN_WIDTH * 2,
+    'height': SCREEN_HEIGHT * 2,
+    'scale': SCREEN_SCALE * 2
+  },
+  'large': {
+    'width': SCREEN_WIDTH * 2.5,
+    'height': SCREEN_HEIGHT * 2.5,
+    'scale': SCREEN_SCALE * 1.5
+  }
+}
 FPS = 60
 RENDER_SCALE = 2.0
 BASE_IMG_PATH = 'assets/images/'
-TRANSITION_COLOR = (255, 255, 255)
+TRANSITION_COLOR = (41, 41, 41)
 TRANSITION_SPEED = 30
 BACKGROUND_SHADOWS_LIST = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 

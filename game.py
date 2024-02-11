@@ -12,19 +12,38 @@ from components.clouds import Clouds
 from components.particle import Particle
 
 from config.utils import load_image, load_images, Animation
-from config.constants import SCREEN_HEIGHT, SCREEN_WIDTH, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM, TRANSITION_COLOR, TRANSITION_SPEED, BACKGROUND_SHADOWS_LIST, SFX_VOLUMES, MUSIC_VOLUMES
+from config.constants import SCREEN_PROPORTION, SCREEN_SIZE_OPTIONS, FPS, RENDER_SCALE, LEAF_ANIMATION_INTENSITY, LEFT_VELOCITY, PLAYER_DIM, ENEMY_DIM, TRANSITION_COLOR, TRANSITION_SPEED, BACKGROUND_SHADOWS_LIST, SFX_VOLUMES, MUSIC_VOLUMES
 
 class Game:
   def __init__(self) -> None:
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
+    
     pygame.init()
-
     pygame.display.set_caption("Smash Ninja")
-    self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    self.display = pygame.Surface(
-      (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2),
-      pygame.SRCALPHA
-    ) # SCALING UP
-    self.display_2 = pygame.Surface((SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
+    
+    self.display_info = pygame.display.Info()
+    
+    self.current_screen_size = [
+      self.display_info.current_w,
+      self.display_info.current_h
+    ]
+    self.screen_size = SCREEN_SIZE_OPTIONS['large']
+    self.width = self.screen_size['width']
+    self.height = self.screen_size['height']
+    self.scale = self.screen_size['scale']
+    
+    self.screen = pygame.display.set_mode((
+      self.width, 
+      self.height
+    ), pygame.RESIZABLE)
+    self.display = pygame.Surface((
+      self.width / self.scale, 
+      self.height / self.scale
+    ), pygame.SRCALPHA)
+    self.display_2 = pygame.Surface((
+      self.width / self.scale, 
+      self.height / self.scale
+    ))
 
     self.clock = pygame.time.Clock()
     
@@ -81,6 +100,17 @@ class Game:
     for sfx in list(self.sfx):
       self.sfx[sfx].set_volume(SFX_VOLUMES[sfx])
 
+  def set_screen_size(self, size: str) -> None:
+    self.screen_size = SCREEN_SIZE_OPTIONS[size]
+
+  def set_background_image(self, asset: str) -> None:
+    self.background_image = pygame.transform.scale(
+      self.assets[asset], (
+        self.width / self.scale,
+        self.height / self.scale
+      )
+    )
+  
   def load_level(self, map_id):
     self.tilemap.load(f"assets/maps/{map_id}.json")
     
@@ -115,6 +145,12 @@ class Game:
     self.scroll = [0, 0]
     self.dead = 0
     self.transition = -30
+    self.background_image = pygame.transform.scale(
+      self.assets['background'], (
+        self.width / self.scale,
+        self.height / self.scale
+      )
+    )
   
   def run(self) -> None:
     self.sfx['ambience'].play(-1)
@@ -127,7 +163,7 @@ class Game:
         self.change_music = False
         
       self.display.fill((0, 0, 0, 0))
-      self.display_2.blit(self.assets['background'], (0, 0))
+      self.display_2.blit(self.background_image, (0, 0))
       
       self.screen_shake = max(0, self.screen_shake - 1)
       
@@ -249,6 +285,9 @@ class Game:
         if event.type == pygame.QUIT:
           pygame.quit()
           sys.exit()
+        if event.type == pygame.VIDEORESIZE:
+          self.width = self.current_screen_size[0]
+          self.height = self.current_screen_size[0] / SCREEN_PROPORTION
         if event.type == pygame.KEYDOWN:
           if event.key == pygame.K_a:
             self.movement[0] = True
@@ -273,7 +312,7 @@ class Game:
           transition_surf, 
           TRANSITION_COLOR, 
           (self.display.get_width() // 2, self.display.get_height() // 2),
-          (TRANSITION_SPEED - abs(self.transition)) * (SCREEN_HEIGHT / TRANSITION_SPEED / 2)
+          (TRANSITION_SPEED - abs(self.transition)) * (self.height / TRANSITION_SPEED / 2)
         )
         transition_surf.set_colorkey(TRANSITION_COLOR)
         self.display.blit(transition_surf, (0, 0))
@@ -285,7 +324,13 @@ class Game:
         random.random() * self.screen_shake - self.screen_shake / 2,
         random.random() * self.screen_shake - self.screen_shake / 2,
       )
-      self.screen.blit(pygame.transform.scale(self.display_2, self.screen.get_size()), screen_shake_offset) # BLIT FOR SCALING UP
+      print(self.screen.get_size())
+      self.screen.blit(pygame.transform.scale(
+        self.display_2, (
+          self.width,
+          self.height
+        )
+      ), screen_shake_offset) # BLIT FOR SCALING UP
       pygame.display.update()
       self.clock.tick(FPS)
       
