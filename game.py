@@ -62,7 +62,7 @@ class Game:
     self.player = Player(self, player_pos, PLAYER_DIM)
     self.tilemap = Tilemap(self, tile_size=16)
 
-    self.level = 3
+    self.level = 0
     self.music = 0
     self.change_music = True
     self.load_level(self.level)
