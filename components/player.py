@@ -20,10 +20,8 @@ class Player(Physics):
     
     self.air_time += 1
     
-    if self.air_time > PLAYER_MAX_AIR_TIME:
-      self.game.dead += 1
-    
     if self.collisions['down']:
+      self.falling_height = 0
       self.air_time = 0
       self.jumps = PLAYER_JUMPS
       
@@ -36,7 +34,12 @@ class Player(Physics):
       if self.collisions['left']:
         self.flip = True
       self.set_action("wall_slide")
-        
+    
+    if (self.air_time > PLAYER_MAX_AIR_TIME) and self.wall_slide:
+      self.air_time = 0
+    elif (self.air_time > PLAYER_MAX_AIR_TIME) and not self.wall_slide:
+      self.game.dead += 1
+    
     if not self.wall_slide:
       if self.air_time > 4:
         self.set_action('jump')

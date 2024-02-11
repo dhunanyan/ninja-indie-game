@@ -62,7 +62,7 @@ class Game:
     self.player = Player(self, player_pos, PLAYER_DIM)
     self.tilemap = Tilemap(self, tile_size=16)
 
-    self.level = 0
+    self.level = 3
     self.music = 0
     self.change_music = True
     self.load_level(self.level)
@@ -135,9 +135,7 @@ class Game:
       if not len(self.enemies):
         self.transition += 1
         if self.transition > 30:
-          print("PRZED:", self.level)
-          self.level += min(self.level + 1, len(os.listdir('assets/maps')) - 1)
-          print("PO:", self.level)
+          self.level = min(self.level + 1, len(os.listdir('assets/maps')) - 1)
           self.change_music = True
           self.load_level(self.level)
       if self.transition < 0:

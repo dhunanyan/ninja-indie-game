@@ -1,3 +1,4 @@
+import os
 import sys
 import pygame
 
@@ -27,9 +28,11 @@ class Editor:
     self.movement = [False, False, False, False]
     
     self.tilemap = Tilemap(self, tile_size=16)
+    self.input_file = './assets/maps/0.json'
+    self.output_file = f"assets/maps/{len(os.listdir('assets/maps'))}.json"
 
     try:
-      self.tilemap.load('./assets/maps/map0.json')
+      self.tilemap.load(self.input_file)
     except FileNotFoundError:
       pass
     
@@ -143,7 +146,7 @@ class Editor:
           if event.key == pygame.K_g:
             self.ongrid = not self.ongrid
           if event.key == pygame.K_o:
-            self.tilemap.save('map.json')
+            self.tilemap.save(self.output_file)
           if event.key == pygame.K_LCTRL:
             self.shift = True
           if event.key == pygame.K_t:
